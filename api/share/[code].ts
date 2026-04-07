@@ -43,7 +43,7 @@ function buildSharePage(
   const statusMessage = expired
     ? 'This share link has expired.'
     : claimed
-      ? 'This spot has already been claimed.'
+      ? 'Someone already added this spot.'
       : `Someone shared a fishing spot with you!`;
 
   const showActions = !expired && !claimed;
