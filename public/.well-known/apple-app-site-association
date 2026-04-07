@@ -4,7 +4,7 @@
     "details": [
       {
         "appID": "5PFJUKLA73.io.makolabs.bitesignal",
-        "paths": ["/share/*"]
+        "paths": ["/share/*", "/trip/*"]
       }
     ]
   }
