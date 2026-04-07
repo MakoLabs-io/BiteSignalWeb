@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BiteSignal — Real-time fishing intelligence. Know when to fish.</title>
+  <meta name="description" content="Live bite scores, precision bite windows, tide forecasts, and per-catch condition tracking — all in one app." />
+  <link rel="icon" type="image/png" href="/images/icon.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="BiteSignal — Real-time fishing intelligence" />
+  <meta property="og:description" content="Live bite scores, precision bite windows, tide forecasts, and per-catch condition tracking — all in one app." />
+  <meta property="og:image" content="https://bite-signal.com/images/icon.png" />
+  <meta property="og:url" content="https://bite-signal.com" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="BiteSignal — Real-time fishing intelligence" />
+  <meta name="twitter:description" content="Live bite scores, precision bite windows, tide forecasts, and per-catch condition tracking — all in one app." />
+  <meta name="twitter:image" content="https://bite-signal.com/images/icon.png" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a1628;
+      color: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .hero-logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 22px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .hero .tagline {
+      font-size: 20px;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hero .description {
+      font-size: 17px;
+      color: #94a3b8;
+      line-height: 1.6;
+      max-width: 540px;
+      margin: 0 auto 36px;
+    }
+
+    .store-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .store-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      background: #1a2744;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      border: 1px solid #334155;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .store-btn:hover {
+      background: #243352;
+      border-color: #38bdf8;
+    }
+
+    .store-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .store-btn .store-label {
+      text-align: left;
+      line-height: 1.2;
+    }
+
+    .store-btn .store-label small {
+      font-size: 11px;
+      font-weight: 400;
+      color: #94a3b8;
+      display: block;
+    }
+
+    /* ── Features ── */
+    .features {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 60px;
+      margin-bottom: 80px;
+    }
+
+    .feature:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .feature-phone {
+      flex-shrink: 0;
+      width: 280px;
+      position: relative;
+    }
+
+    .phone-frame {
+      background: #1a2744;
+      border-radius: 32px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .phone-frame img {
+      width: 100%;
+      border-radius: 22px;
+      display: block;
+    }
+
+    .feature-text {
+      flex: 1;
+    }
+
+    .feature-text h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .feature-text p {
+      font-size: 17px;
+      color: #94a3b8;
+      line-height: 1.7;
+      max-width: 420px;
+    }
+
+    .feature-accent {
+      display: inline-block;
+      width: 40px;
+      height: 4px;
+      background: #38bdf8;
+      border-radius: 2px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid #1e293b;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #38bdf8;
+    }
+
+    .footer-copy {
+      color: #475569;
+      font-size: 13px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 60px 20px 40px;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .hero .tagline {
+        font-size: 17px;
+      }
+
+      .hero .description {
+        font-size: 15px;
+      }
+
+      .feature {
+        flex-direction: column !important;
+        text-align: center;
+        gap: 32px;
+        margin-bottom: 60px;
+      }
+
+      .feature-phone {
+        width: 220px;
+      }
+
+      .feature-text p {
+        max-width: 100%;
+      }
+
+      .features {
+        padding: 20px 20px 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img src="images/icon.png" alt="BiteSignal logo" class="hero-logo" />
+    <h1>BiteSignal</h1>
+    <p class="tagline">Real-time fishing intelligence. Know when to fish.</p>
+    <p class="description">Live bite scores, precision bite windows, tide forecasts, and per-catch condition tracking — all in one app.</p>
+    <div class="store-buttons">
+      <a href="https://apps.apple.com/app/bitesignal/id6760796117" class="store-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <span class="store-label"><small>Download on the</small>App Store</span>
+      </a>
+      <a href="https://play.google.com/store/apps/details?id=io.makolabs.bitesignal" class="store-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3.18 23.76c-.36-.17-.58-.53-.58-.94V1.18c0-.41.22-.77.58-.94l11.83 11.76L3.18 23.76zM16.23 13.22l-2.49 2.48 7.56 4.28c.68.39 1.36.02 1.36-.02l-6.43-6.74zM16.23 10.78l6.43-6.74c0-.04-.68-.41-1.36-.02l-7.56 4.28 2.49 2.48zM13.01 12l-2.76-2.74L4.4 1.42l8.61 8.58v.01l-8.61 8.57 5.85-7.84L13.01 12z"/></svg>
+        <span class="store-label"><small>Get it on</small>Google Play</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="feature">
+      <div class="feature-phone">
+        <div class="phone-frame">
+          <img src="images/Screenshot_20260406_185316.png" alt="BiteSignal bite score dashboard" />
+        </div>
+      </div>
+      <div class="feature-text">
+        <div class="feature-accent"></div>
+        <h2>Real-time bite score</h2>
+        <p>Know exactly when the fish are biting with our 0-10 composite score based on tides, pressure, solunar, wind, and more. See your next bite window countdown so you never miss prime time.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-phone">
+        <div class="phone-frame">
+          <img src="images/Screenshot_20260406_185355.png" alt="BiteSignal fishing spots map" />
+        </div>
+      </div>
+      <div class="feature-text">
+        <div class="feature-accent"></div>
+        <h2>Map your spots</h2>
+        <p>Save your fishing spots with automatic tide station detection and per-spot analytics. See all your locations at a glance and track what's working where.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-phone">
+        <div class="phone-frame">
+          <img src="images/Screenshot_20260406_185430.png" alt="BiteSignal catch logging" />
+        </div>
+      </div>
+      <div class="feature-text">
+        <div class="feature-accent"></div>
+        <h2>Log every catch</h2>
+        <p>Species, measurements, bait, photo — plus 15+ environmental conditions captured automatically. Build a detailed record of every fish without the hassle.</p>
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-phone">
+        <div class="phone-frame">
+          <img src="images/Screenshot_20260406_185515.png" alt="BiteSignal fishing patterns and analytics" />
+        </div>
+      </div>
+      <div class="feature-text">
+        <div class="feature-accent"></div>
+        <h2>Track your patterns</h2>
+        <p>Analytics reveal your best times, tides, baits, and spots so you can fish smarter. Your personal fishing recipe, backed by data from every trip.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="https://makolabs.io">Built by Mako Labs</a>
+      <a href="mailto:support@makolabs.io">Support</a>
+      <a href="https://makolabs-io.github.io/mako-policies/bitesignal-privacy.html">Privacy Policy</a>
+      <a href="https://makolabs-io.github.io/mako-policies/bitesignal-eula.html">EULA</a>
+      <a href="https://makolabs-io.github.io/mako-policies/bitesignal-delete-account.html">Delete Account</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 Mako Labs LLC</p>
+  </footer>
+
+</body>
+</html>
