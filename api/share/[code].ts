@@ -36,7 +36,7 @@ function buildSharePage(
   expired: boolean,
   claimed: boolean
 ): string {
-  const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id0000000000'; // TODO: replace with real App Store ID
+  const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id6760796117'; // TODO: replace with real App Store ID
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=io.makolabs.bitesignal';
   const deepLink = `bitesignal://share/${code}`;
 

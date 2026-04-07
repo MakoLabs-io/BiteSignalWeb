@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "io.makolabs.bitesignal",
-      "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
+      "sha256_cert_fingerprints": ["8D:3E:D4:48:A7:EC:08:60:F4:EC:47:B7:F8:3A:43:AD:8C:50:33:82:C3:D7:87:C5:BB:FA:AA:3F:01:5A:A6:83"]
     }
   }
 ]
