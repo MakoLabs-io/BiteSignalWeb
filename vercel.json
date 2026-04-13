@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/share/:code", "destination": "/api/share/:code" },
-    { "source": "/trip/:code", "destination": "/api/trip/:code" }
+    { "source": "/trip/:code", "destination": "/api/trip/:code" },
+    { "source": "/trip/join/:code", "destination": "/api/trip/:code" }
   ],
   "headers": [
     {

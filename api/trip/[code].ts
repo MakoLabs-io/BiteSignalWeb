@@ -35,7 +35,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const expired = !invite || new Date(invite.expires_at) < new Date();
   const full = invite ? invite.max_uses > 0 && invite.use_count >= invite.max_uses : false;
 
-  const html = buildTripPage(upperCode, tripName, expired, full);
+  // Rebuild the canonical URL the user actually visited so the og:url matches.
+  // The rewrite in vercel.json routes both /trip/:code and /trip/join/:code
+  // to this handler — req.url reflects the post-rewrite path (/api/trip/...),
+  // so we use the Host header + a fallback to reconstruct the public URL.
+  const host = (req.headers['x-forwarded-host'] ?? req.headers.host) as string | undefined;
+  const originalPath =
+    (req.headers['x-original-url'] as string | undefined) ??
+    (typeof req.url === 'string' && req.url.startsWith('/api/trip/')
+      ? `/trip/join/${upperCode}`
+      : req.url ?? `/trip/join/${upperCode}`);
+  const canonicalUrl = host ? `https://${host}${originalPath}` : `https://bite-signal.com/trip/join/${upperCode}`;
+
+  const html = buildTripPage(upperCode, tripName, expired, full, canonicalUrl);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   return res.status(200).send(html);
 }
@@ -44,7 +56,8 @@ function buildTripPage(
   code: string,
   tripName: string,
   expired: boolean,
-  full: boolean
+  full: boolean,
+  canonicalUrl: string,
 ): string {
   const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id6760796117';
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=io.makolabs.bitesignal';
@@ -68,7 +81,7 @@ function buildTripPage(
   <meta property="og:title" content="Join "${escapeHtml(tripName)}" on BiteSignal" />
   <meta property="og:description" content="${showActions ? 'Open in BiteSignal to join this fishing trip!' : statusMessage}" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://bite-signal.com/trip/${code}" />
+  <meta property="og:url" content="${canonicalUrl}" />
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
