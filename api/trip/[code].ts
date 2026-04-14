@@ -14,26 +14,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const upperCode = code.toUpperCase();
 
-  // Look up the invite record
-  const { data: invite } = await supabase
-    .from('trip_invites')
-    .select('trip_id, expires_at, max_uses, use_count')
-    .eq('code', upperCode)
-    .single();
+  // Use a SECURITY DEFINER RPC so the anon role can preview invites without
+  // needing direct SELECT on trip_invites (which is restricted to authenticated
+  // users by RLS). Returns { status, trip_name? } where status is one of:
+  //   ready | expired | full | not_found
+  const { data: peek, error: peekError } = await supabase
+    .rpc('peek_trip_invite_public', { _code: upperCode });
 
-  // Look up the trip name if invite exists
-  let tripName = 'A Fishing Trip';
-  if (invite?.trip_id) {
-    const { data: trip } = await supabase
-      .from('trips')
-      .select('name')
-      .eq('id', invite.trip_id)
-      .single();
-    if (trip?.name) tripName = trip.name;
+  // Distinguish a real backend failure from a missing/expired invite. If the
+  // RPC itself errored we render a neutral "couldn't load" page instead of
+  // claiming the invite expired — that error message is misleading.
+  if (peekError) {
+    console.error('[trip-share] peek_trip_invite_public failed:', peekError.message);
+    const html = buildTripPage(upperCode, 'A Fishing Trip', false, false, true, `https://bite-signal.com/trip/join/${upperCode}`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(html);
   }
 
-  const expired = !invite || new Date(invite.expires_at) < new Date();
-  const full = invite ? invite.max_uses > 0 && invite.use_count >= invite.max_uses : false;
+  type PeekResult = { status: 'ready' | 'expired' | 'full' | 'not_found'; trip_name?: string };
+  const result = (peek ?? { status: 'not_found' }) as PeekResult;
+
+  const tripName = result.trip_name ?? 'A Fishing Trip';
+  const expired = result.status === 'expired' || result.status === 'not_found';
+  const full = result.status === 'full';
 
   // Rebuild the canonical URL the user actually visited so the og:url matches.
   // The rewrite in vercel.json routes both /trip/:code and /trip/join/:code
@@ -47,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : req.url ?? `/trip/join/${upperCode}`);
   const canonicalUrl = host ? `https://${host}${originalPath}` : `https://bite-signal.com/trip/join/${upperCode}`;
 
-  const html = buildTripPage(upperCode, tripName, expired, full, canonicalUrl);
+  const html = buildTripPage(upperCode, tripName, expired, full, false, canonicalUrl);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   return res.status(200).send(html);
 }
@@ -57,19 +60,22 @@ function buildTripPage(
   tripName: string,
   expired: boolean,
   full: boolean,
+  unavailable: boolean,
   canonicalUrl: string,
 ): string {
   const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id6760796117';
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=io.makolabs.bitesignal';
   const deepLink = `bitesignal://trip/join/${code}`;
 
-  const statusMessage = expired
-    ? 'This invite link has expired.'
-    : full
-      ? 'This trip is full.'
-      : `You've been invited to join a fishing trip!`;
+  const statusMessage = unavailable
+    ? "We couldn't load this invite right now. Please try again in a moment."
+    : expired
+      ? 'This invite link has expired.'
+      : full
+        ? 'This trip is full.'
+        : `You've been invited to join a fishing trip!`;
 
-  const showActions = !expired && !full;
+  const showActions = !expired && !full && !unavailable;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -181,8 +187,8 @@ function buildTripPage(
   <div class="card">
     <div class="logo">BITESIGNAL</div>
 
-    ${expired || full ? `
-      <div class="expired-icon">${expired ? '⏱️' : '🎣'}</div>
+    ${expired || full || unavailable ? `
+      <div class="expired-icon">${unavailable ? '⚠️' : expired ? '⏱️' : '🎣'}</div>
       <div class="trip-name">${escapeHtml(tripName)}</div>
       <div class="status">${statusMessage}</div>
     ` : `
