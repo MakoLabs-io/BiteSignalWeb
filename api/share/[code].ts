@@ -15,17 +15,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const upperCode = code.toUpperCase();
 
   // Look up the share record
-  const { data: share } = await supabase
+  const { data: share, error: shareError } = await supabase
     .from('spot_shares')
     .select('spot_payload, expires_at, claimed_by')
     .eq('code', upperCode)
     .single();
 
-  const expired = !share || new Date(share.expires_at) < new Date();
+  // PGRST116 = "no rows returned" — valid not-found, not a real error
+  if (shareError && shareError.code !== 'PGRST116') {
+    console.error('[spot-share] query failed:', shareError.message);
+    const html = buildSharePage(upperCode, 'A Fishing Spot', false, false, true);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(html);
+  }
+
+  const notFound = !share;
+  const expired = share ? new Date(share.expires_at) < new Date() : false;
   const claimed = share?.claimed_by != null;
   const spotName = share?.spot_payload?.name ?? 'A Fishing Spot';
 
-  const html = buildSharePage(upperCode, spotName, expired, claimed);
+  const html = buildSharePage(upperCode, spotName, notFound, expired, claimed, false);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   return res.status(200).send(html);
 }
@@ -33,20 +42,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 function buildSharePage(
   code: string,
   spotName: string,
+  notFound: boolean,
   expired: boolean,
-  claimed: boolean
+  claimed: boolean,
+  unavailable: boolean
 ): string {
-  const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id6760796117'; // TODO: replace with real App Store ID
+  const appStoreUrl = 'https://apps.apple.com/app/bitesignal/id6760796117';
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=io.makolabs.bitesignal';
   const deepLink = `bitesignal://share/${code}`;
 
-  const statusMessage = expired
-    ? 'This share link has expired.'
-    : claimed
-      ? 'Someone already added this spot.'
-      : `Someone shared a fishing spot with you!`;
+  const statusMessage = unavailable
+    ? "We couldn't load this spot right now. Please try again in a moment."
+    : notFound
+      ? 'This share link could not be found. Please check the code and try again.'
+      : expired
+        ? 'This share link has expired.'
+        : claimed
+          ? 'Someone already added this spot.'
+          : `Someone shared a fishing spot with you!`;
 
-  const showActions = !expired && !claimed;
+  const showActions = !notFound && !expired && !claimed && !unavailable;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -144,10 +159,21 @@ function buildSharePage(
       background: #1e3a5f;
       color: #e2e8f0;
     }
+    .download-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .download-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
     .divider {
       color: #475569;
       font-size: 13px;
-      margin: 4px 0;
+      margin: 8px 0 12px;
     }
     .expired-icon {
       font-size: 48px;
@@ -159,8 +185,8 @@ function buildSharePage(
   <div class="card">
     <div class="logo">BITESIGNAL</div>
 
-    ${expired || claimed ? `
-      <div class="expired-icon">${expired ? '⏱️' : '✅'}</div>
+    ${!showActions ? `
+      <div class="expired-icon">${unavailable ? '⚠️' : notFound ? '🔍' : expired ? '⏱️' : '✅'}</div>
       <div class="spot-name">${escapeHtml(spotName)}</div>
       <div class="status">${statusMessage}</div>
     ` : `
@@ -172,14 +198,42 @@ function buildSharePage(
         <div class="code-value">${code}</div>
       </div>
 
-      <div class="buttons">
-        <a href="${deepLink}" class="btn btn-primary">Open in BiteSignal</a>
-        <div class="divider">Don't have the app?</div>
-        <a href="${appStoreUrl}" class="btn btn-store">Download for iPhone</a>
-        <a href="${playStoreUrl}" class="btn btn-store">Download for Android</a>
+      <div class="download-section">
+        <p class="download-label">Download the free app to claim this spot</p>
+        <a href="${appStoreUrl}" class="btn btn-primary" id="btn-ios">Download for iPhone</a>
+        <a href="${playStoreUrl}" class="btn btn-primary" id="btn-android">Download for Android</a>
+        <a href="${appStoreUrl}" class="btn btn-primary" id="btn-desktop">Download BiteSignal</a>
       </div>
+      <div class="divider">Already have BiteSignal?</div>
+      <a href="javascript:void(0)" onclick="openApp()" class="btn btn-store">Open in BiteSignal</a>
     `}
   </div>
+  <script>
+    (function () {
+      var ua = navigator.userAgent;
+      var isIOS = /iPad|iPhone|iPod/.test(ua);
+      var isAndroid = /Android/.test(ua);
+      var btnIOS = document.getElementById('btn-ios');
+      var btnAndroid = document.getElementById('btn-android');
+      var btnDesktop = document.getElementById('btn-desktop');
+      if (btnIOS) btnIOS.style.display = isIOS ? 'block' : 'none';
+      if (btnAndroid) btnAndroid.style.display = isAndroid ? 'block' : 'none';
+      if (btnDesktop) btnDesktop.style.display = (!isIOS && !isAndroid) ? 'block' : 'none';
+
+      window.openApp = function () {
+        if (isAndroid) {
+          var intentUrl = 'intent://share/${code}#Intent;scheme=bitesignal;package=io.makolabs.bitesignal;S.browser_fallback_url=' + encodeURIComponent('${playStoreUrl}') + ';end';
+          window.location.href = intentUrl;
+          return;
+        }
+        window.location.href = '${deepLink}';
+        if (isIOS) {
+          var t = setTimeout(function () { window.location.href = '${appStoreUrl}'; }, 1500);
+          document.addEventListener('visibilitychange', function () { if (document.hidden) clearTimeout(t); });
+        }
+      };
+    })();
+  </script>
 </body>
 </html>`;
 }

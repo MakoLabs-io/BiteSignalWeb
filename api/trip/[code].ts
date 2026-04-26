@@ -26,16 +26,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // claiming the invite expired — that error message is misleading.
   if (peekError) {
     console.error('[trip-share] peek_trip_invite_public failed:', peekError.message);
-    const html = buildTripPage(upperCode, 'A Fishing Trip', false, false, true, `https://bite-signal.com/trip/join/${upperCode}`);
+    const html = buildTripPage(upperCode, 'A Fishing Trip', false, false, false, true, `https://bite-signal.com/trip/join/${upperCode}`);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(html);
   }
 
   type PeekResult = { status: 'ready' | 'expired' | 'full' | 'not_found'; trip_name?: string };
-  const result = (peek ?? { status: 'not_found' }) as PeekResult;
+  // RPC may return a single object or an array depending on the function signature
+  const raw = Array.isArray(peek) ? peek[0] : peek;
+  const result = (raw ?? { status: 'not_found' }) as PeekResult;
 
   const tripName = result.trip_name ?? 'A Fishing Trip';
-  const expired = result.status === 'expired' || result.status === 'not_found';
+  const notFound = result.status === 'not_found' || result.status == null;
+  const expired = result.status === 'expired';
   const full = result.status === 'full';
 
   // Rebuild the canonical URL the user actually visited so the og:url matches.
@@ -50,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : req.url ?? `/trip/join/${upperCode}`);
   const canonicalUrl = host ? `https://${host}${originalPath}` : `https://bite-signal.com/trip/join/${upperCode}`;
 
-  const html = buildTripPage(upperCode, tripName, expired, full, false, canonicalUrl);
+  const html = buildTripPage(upperCode, tripName, notFound, expired, full, false, canonicalUrl);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   return res.status(200).send(html);
 }
@@ -58,6 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 function buildTripPage(
   code: string,
   tripName: string,
+  notFound: boolean,
   expired: boolean,
   full: boolean,
   unavailable: boolean,
@@ -69,13 +73,15 @@ function buildTripPage(
 
   const statusMessage = unavailable
     ? "We couldn't load this invite right now. Please try again in a moment."
-    : expired
-      ? 'This invite link has expired.'
-      : full
-        ? 'This trip is full.'
-        : `You've been invited to join a fishing trip!`;
+    : notFound
+      ? 'This invite link could not be found. Please check the code and try again.'
+      : expired
+        ? 'This invite link has expired.'
+        : full
+          ? 'This trip is full.'
+          : `You've been invited to join a fishing trip!`;
 
-  const showActions = !expired && !full && !unavailable;
+  const showActions = !notFound && !expired && !full && !unavailable;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -172,10 +178,21 @@ function buildTripPage(
       background: #1e3a5f;
       color: #e2e8f0;
     }
+    .download-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .download-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
     .divider {
       color: #475569;
       font-size: 13px;
-      margin: 4px 0;
+      margin: 8px 0 12px;
     }
     .expired-icon {
       font-size: 48px;
@@ -187,8 +204,8 @@ function buildTripPage(
   <div class="card">
     <div class="logo">BITESIGNAL</div>
 
-    ${expired || full || unavailable ? `
-      <div class="expired-icon">${unavailable ? '⚠️' : expired ? '⏱️' : '🎣'}</div>
+    ${!showActions ? `
+      <div class="expired-icon">${unavailable ? '⚠️' : notFound ? '🔍' : expired ? '⏱️' : '🎣'}</div>
       <div class="trip-name">${escapeHtml(tripName)}</div>
       <div class="status">${statusMessage}</div>
     ` : `
@@ -200,14 +217,42 @@ function buildTripPage(
         <div class="code-value">${code}</div>
       </div>
 
-      <div class="buttons">
-        <a href="${deepLink}" class="btn btn-primary">Open in BiteSignal</a>
-        <div class="divider">Don't have the app?</div>
-        <a href="${appStoreUrl}" class="btn btn-store">Download for iPhone</a>
-        <a href="${playStoreUrl}" class="btn btn-store">Download for Android</a>
+      <div class="download-section">
+        <p class="download-label">Download the free app to join this trip</p>
+        <a href="${appStoreUrl}" class="btn btn-primary" id="btn-ios">Download for iPhone</a>
+        <a href="${playStoreUrl}" class="btn btn-primary" id="btn-android">Download for Android</a>
+        <a href="${appStoreUrl}" class="btn btn-primary" id="btn-desktop">Download BiteSignal</a>
       </div>
+      <div class="divider">Already have BiteSignal?</div>
+      <a href="javascript:void(0)" onclick="openApp()" class="btn btn-store">Open in BiteSignal</a>
     `}
   </div>
+  <script>
+    (function () {
+      var ua = navigator.userAgent;
+      var isIOS = /iPad|iPhone|iPod/.test(ua);
+      var isAndroid = /Android/.test(ua);
+      var btnIOS = document.getElementById('btn-ios');
+      var btnAndroid = document.getElementById('btn-android');
+      var btnDesktop = document.getElementById('btn-desktop');
+      if (btnIOS) btnIOS.style.display = isIOS ? 'block' : 'none';
+      if (btnAndroid) btnAndroid.style.display = isAndroid ? 'block' : 'none';
+      if (btnDesktop) btnDesktop.style.display = (!isIOS && !isAndroid) ? 'block' : 'none';
+
+      window.openApp = function () {
+        if (isAndroid) {
+          var intentUrl = 'intent://trip/join/${code}#Intent;scheme=bitesignal;package=io.makolabs.bitesignal;S.browser_fallback_url=' + encodeURIComponent('${playStoreUrl}') + ';end';
+          window.location.href = intentUrl;
+          return;
+        }
+        window.location.href = '${deepLink}';
+        if (isIOS) {
+          var t = setTimeout(function () { window.location.href = '${appStoreUrl}'; }, 1500);
+          document.addEventListener('visibilitychange', function () { if (document.hidden) clearTimeout(t); });
+        }
+      };
+    })();
+  </script>
 </body>
 </html>`;
 }
