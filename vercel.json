@@ -1,10 +1,35 @@
 {
   "redirects": [
-    { "source": "/qr/lbi",       "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=lbi",       "permanent": false },
-    { "source": "/qr/bait-shop", "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=bait-shop", "permanent": false },
-    { "source": "/qr/facebook",  "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=facebook",  "permanent": false },
-    { "source": "/qr/club",      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=club",      "permanent": false },
-    { "source": "/qr/guide",     "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=guide",     "permanent": false }
+    {
+      "source": "/qr/lbi",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=lbi",
+      "permanent": false
+    },
+    {
+      "source": "/qr/bait-shop",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=bait-shop",
+      "permanent": false
+    },
+    {
+      "source": "/qr/facebook",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=facebook",
+      "permanent": false
+    },
+    {
+      "source": "/qr/club",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=club",
+      "permanent": false
+    },
+    {
+      "source": "/qr/guide",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=guide",
+      "permanent": false
+    },
+    {
+      "source": "/qr/sticker",
+      "destination": "/?utm_source=qr&utm_medium=qr_code&utm_campaign=sticker",
+      "permanent": false
+    }
   ],
   "rewrites": [
     { "source": "/share/:code", "destination": "/api/share/:code" },
@@ -14,15 +39,11 @@
   "headers": [
     {
       "source": "/.well-known/apple-app-site-association",
-      "headers": [
-        { "key": "Content-Type", "value": "application/json" }
-      ]
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
     },
     {
       "source": "/.well-known/assetlinks.json",
-      "headers": [
-        { "key": "Content-Type", "value": "application/json" }
-      ]
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
     }
   ]
 }
